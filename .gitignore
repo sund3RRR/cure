@@ -1,0 +1,13 @@
+.envrc
+.vscode
+.idea
+.private/
+.DS_Store
+**/.direnv/**
+vendor.protogen
+/bin/
+
+cmd/test*/*
+data/
+config/dev.y*
+deploy/bin/cure
