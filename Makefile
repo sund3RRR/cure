@@ -1,4 +1,4 @@
-.PHONY: run build lint deploy
+.PHONY: run build deploy lint
 
 run:
 	go run cmd/cure/main.go
