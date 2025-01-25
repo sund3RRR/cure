@@ -48,7 +48,6 @@ func NewConfig(paths ...string) Config {
 	for _, path := range paths {
 		file, err := os.ReadFile(path)
 		if err != nil {
-			fmt.Println(err)
 			continue
 		}
 
