@@ -1,3 +1,4 @@
+// Package hello is for testing purposes
 package hello
 
 import (
@@ -9,18 +10,20 @@ import (
 	"go.uber.org/zap"
 )
 
+// Hello command
 type Hello struct {
 	logger *zap.Logger
 	cmd    *cli.Command
 }
 
-func NewHello(cfg config.Config, logger *zap.Logger) *Hello {
+// NewHello creates new hello
+func NewHello(_ config.Config, logger *zap.Logger) *Hello {
 	return &Hello{
 		logger: logger,
 		cmd: &cli.Command{
 			Name:  "hello",
 			Usage: "simple",
-			Action: func(ctx context.Context, cmd *cli.Command) error {
+			Action: func(_ context.Context, cmd *cli.Command) error {
 				logger.Debug("New hello command")
 
 				if cmd.NArg() > 0 {
@@ -35,6 +38,7 @@ func NewHello(cfg config.Config, logger *zap.Logger) *Hello {
 	}
 }
 
+// Command is the method returning hello command
 func (h *Hello) Command() *cli.Command {
 	return h.cmd
 }

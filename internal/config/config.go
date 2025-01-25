@@ -1,23 +1,28 @@
+// Package config defines the cure options
 package config
 
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/yaml.v3"
 )
 
+// Config is the main config object
 type Config struct {
-	System System     `yaml:"system`
+	System System     `yaml:"system"`
 	Logger zap.Config `yaml:"logger"`
 }
 
+// System contains info about system wide profile
 type System struct {
 	ProfileDir string `yaml:"profileDir"`
 }
 
+// NewConfig creates a new Config and load with given paths
 func NewConfig(paths ...string) Config {
 	cfg := Config{
 		System: System{
@@ -46,7 +51,7 @@ func NewConfig(paths ...string) Config {
 	}
 
 	for _, path := range paths {
-		file, err := os.ReadFile(path)
+		file, err := os.ReadFile(filepath.Clean(path))
 		if err != nil {
 			continue
 		}
