@@ -24,7 +24,11 @@ func main() {
 	if err != nil {
 		log.Fatal("failed to create logger: ", err)
 	}
-	defer logger.Sync()
+	defer func() {
+		if err := logger.Sync(); err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	cmd := &cli.Command{
 		Name:     "cure",
