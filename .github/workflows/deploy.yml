@@ -1,0 +1,30 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  go-build:
+    runs-on: ubuntu-latest
+    container:
+      image: golang:1.23-alpine
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.23.2'
+
+    - name: Build static binary
+      run: |
+        cd cmd/cure
+        CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static"' -o /app/bin/cure .
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: cure-binary
+        path: /app/bin/cure
+
