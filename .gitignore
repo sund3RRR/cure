@@ -6,6 +6,7 @@
 **/.direnv/**
 vendor.protogen
 /bin/
+result*
 
 cmd/test*/*
 data/

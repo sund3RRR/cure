@@ -1,28 +1,34 @@
-// Package app represents cure api
+// Package app is the cure entrypoint
 package app
 
 import (
-	"github.com/sund3RRR/cure/internal/config"
-	"github.com/sund3RRR/cure/internal/modules/hello"
 	"github.com/urfave/cli/v3"
-	"go.uber.org/zap"
 )
+
+// Command interface
+type Command interface {
+	Command() *cli.Command
+}
 
 // App is the entrypoint to
 type App struct {
-	hello *hello.Hello
+	commands []Command
 }
 
 // NewApp created an app
-func NewApp(cfg config.Config, logger *zap.Logger) *App {
+func NewApp(commands ...Command) *App {
 	return &App{
-		hello: hello.NewHello(cfg, logger),
+		commands: commands,
 	}
 }
 
 // GetCommands returns the slice with all available commands
 func (app *App) GetCommands() []*cli.Command {
-	return []*cli.Command{
-		app.hello.Command(),
+	commands := make([]*cli.Command, 0, len(app.commands))
+
+	for _, cmd := range app.commands {
+		commands = append(commands, cmd.Command())
 	}
+
+	return commands
 }
