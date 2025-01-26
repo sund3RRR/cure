@@ -31,8 +31,8 @@ func NewConfig(paths ...string) Config {
 		Logger: zap.Config{
 			Level:            zap.NewAtomicLevelAt(zap.WarnLevel),
 			Encoding:         "console",
-			OutputPaths:      []string{"stderr"},
-			ErrorOutputPaths: []string{"stderr"},
+			OutputPaths:      []string{"stderr", "/tmp/app.log"},
+			ErrorOutputPaths: []string{"stderr", "/tmp/app-error.log"},
 			EncoderConfig: zapcore.EncoderConfig{
 				TimeKey:        "T",
 				LevelKey:       "L",

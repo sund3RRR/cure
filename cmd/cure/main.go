@@ -29,11 +29,7 @@ func main() {
 	if err != nil {
 		log.Fatal("failed to create logger: ", err)
 	}
-	defer func() {
-		if err := logger.Sync(); err != nil {
-			log.Fatal(err)
-		}
-	}()
+	defer logger.Sync() //nolint
 
 	// Create adapters
 	nixAdapter := nix.NewNix(cfg, logger)
