@@ -63,7 +63,7 @@ func (install *Install) handleCommand(_ context.Context, cmd *cli.Command) error
 
 		path := install.nix.GetPackage(registry, pkg)
 
-		fmt.Println("Installed package path: ", path)
+		fmt.Print("Installed package path: ", path)
 	}
 
 	return nil

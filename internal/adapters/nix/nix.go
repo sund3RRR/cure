@@ -36,18 +36,18 @@ func NewNix(_ config.Config, logger *zap.Logger, flags ...string) *Nix {
 // GetPackage takes provided 'registry' and 'pkg', downloads it to /nix/store and
 // returns package path
 func (nix *Nix) GetPackage(registry, pkg string) string {
-	args := append(nix.flags, "build", nix.compilePackage(registry, pkg))
+	args := append(nix.flags, "build", "--no-link", nix.compilePackage(registry, pkg))
 
 	cmd := exec.Command(nix.command, args...) //nolint
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	nix.logger.Debug(strings.Join(args, " "))
+	nix.logger.Debug(nix.command + " " + strings.Join(args, " "))
 
 	err := cmd.Run()
 	if err != nil {
-		nix.logger.Error("failed to execute nix build", zap.Error(err))
+		nix.logger.Warn("failed to execute nix build", zap.Error(err))
 		return ""
 	}
 
@@ -57,7 +57,7 @@ func (nix *Nix) GetPackage(registry, pkg string) string {
 // PathInfo takes provided 'registry' and 'pkg' and returns package path
 // in the /nix/store. Returns empty string if there is no such package.
 func (nix *Nix) PathInfo(registry, pkg string) string {
-	args := append(nix.flags, "path-info", nix.compilePackage(registry, pkg))
+	args := append(nix.flags, "eval", nix.compilePackage(registry, pkg)+".outPath")
 
 	cmd := exec.Command(nix.command, args...) //nolint
 
