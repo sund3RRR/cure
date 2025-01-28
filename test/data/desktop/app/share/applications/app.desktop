@@ -1,0 +1,23 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Version=2.3
+Type=Application
+Name=MyApp
+GenericName=Utility Application
+Comment=An example utility that performs useful tasks.
+TryExec=myapp
+StartupNotify=true
+Exec=myapp %F
+Icon=myapp-icon
+Categories=Utility;System;Development;
+Keywords=utility;system;task;helper;
+MimeType=application/json;application/xml;application/x-tar;
+Actions=RunTask;Configure;
+
+[Desktop Action RunTask]
+Exec=myapp --run-task %F
+Name=Run a predefined task
+
+[Desktop Action Configure]
+Exec=myapp --configure
+Name=Configure the application

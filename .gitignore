@@ -9,6 +9,6 @@ vendor.protogen
 result*
 
 cmd/test*/*
-data/
+/data/
 config/dev.y*
 deploy/bin/cure

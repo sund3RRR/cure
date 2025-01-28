@@ -1,0 +1,19 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=WebBrowser
+GenericName=Web Browser
+Comment=Browse the internet with high speed and security.
+TryExec=webbrowser
+StartupNotify=true
+Exec=webbrowser %U
+Icon=webbrowser-icon
+Categories=Network;WebBrowser;
+Keywords=browser;internet;web;
+MimeType=text/html;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;
+Actions=OpenPrivateWindow;
+
+[Desktop Action OpenPrivateWindow]
+Exec=webbrowser --private %U
+Name=Open a private window
