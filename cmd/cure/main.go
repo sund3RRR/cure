@@ -7,10 +7,10 @@ import (
 	"os"
 	"os/user"
 
-	"github.com/sund3RRR/cure/internal/adapters/nix"
 	"github.com/sund3RRR/cure/internal/app"
 	"github.com/sund3RRR/cure/internal/config"
 	"github.com/sund3RRR/cure/internal/modules/install"
+	"github.com/sund3RRR/cure/pkg/adapters/nix"
 	"github.com/urfave/cli/v3"
 )
 
@@ -32,7 +32,7 @@ func main() {
 	defer logger.Sync() //nolint
 
 	// Create adapters
-	nixAdapter := nix.NewNix(cfg, logger)
+	nixAdapter := nix.NewNix(logger)
 
 	// Create commands
 	installCmd := install.NewInstall(cfg, logger, nixAdapter)

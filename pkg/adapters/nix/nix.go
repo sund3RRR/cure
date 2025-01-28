@@ -7,7 +7,6 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/sund3RRR/cure/internal/config"
 	"go.uber.org/zap"
 )
 
@@ -19,7 +18,7 @@ type Nix struct {
 }
 
 // NewNix creates new nix adapter
-func NewNix(_ config.Config, logger *zap.Logger, flags ...string) *Nix {
+func NewNix(logger *zap.Logger, flags ...string) *Nix {
 	flags = append(
 		flags,
 		"--extra-experimental-features", "nix-command",
