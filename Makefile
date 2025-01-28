@@ -1,4 +1,4 @@
-.PHONY: run build deploy lint
+.PHONY: run build deploy lint test
 
 run:
 	go run cmd/cure/main.go
@@ -10,5 +10,7 @@ build:
 deploy:
 	docker build -t cure-builder -f deploy/Dockerfile --output=deploy/bin .
 
+test:
+	WORKSPACE_DIR=$(shell pwd) go test -v -cover ./...
 lint:
 	golangci-lint run
