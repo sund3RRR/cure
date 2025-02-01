@@ -18,11 +18,11 @@ func TestGetDesktopItems(t *testing.T) {
 	}{
 		{
 			name: "Success test",
-			path: wd + "/test/data/desktop/app",
+			path: wd + "/test/data/app",
 			expectedItems: []Item{
 				{
 					Shebang: "#!/usr/bin/env xdg-open",
-					Path:    wd + "/test/data/desktop/app/share/applications/app.desktop",
+					Path:    wd + "/test/data/app/share/applications/app.desktop",
 					DesktopEntry: Section{
 						Terminal:      false,
 						StartupNotify: true,
