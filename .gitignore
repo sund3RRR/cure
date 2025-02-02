@@ -7,6 +7,7 @@
 vendor.protogen
 /bin/
 result*
+profile
 
 cmd/test*/*
 /data/
