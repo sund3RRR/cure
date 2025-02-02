@@ -1,9 +1,15 @@
 package types
 
-import "os"
+import (
+	"os"
+	"path/filepath"
+)
 
 type Path string
 
+func NewPath(e ...string) Path {
+	return Path(filepath.Join(e...))
+}
 func (p Path) String() string {
 	return string(p)
 }

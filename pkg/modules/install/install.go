@@ -7,7 +7,6 @@ import (
 	"github.com/sund3RRR/cure/pkg/adapters/gpu"
 	"github.com/sund3RRR/cure/pkg/adapters/nix"
 	"github.com/sund3RRR/cure/pkg/types"
-	"github.com/sund3RRR/cure/pkg/types/file"
 )
 
 type Nix interface {
@@ -29,7 +28,7 @@ type File interface {
 type InstallerModule interface {
 	SetParams(params Params)
 	CheckAndPrepare() error
-	Apply(packagePath string, files []*file.File) []*file.File
+	Apply(packagePath string, files []*types.File) []*types.File
 }
 
 type Params struct {
@@ -75,7 +74,7 @@ func (i *Installer) InstallPackage(name string, params Params) error {
 	}
 
 	// Apply modules, e.g. modifications to packages
-	files := make([]*file.File, 0)
+	files := make([]*types.File, 0)
 	for _, m := range i.modules {
 		files = m.Apply(pi.Out.String(), files)
 	}

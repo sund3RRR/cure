@@ -2,6 +2,7 @@ package types
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -22,6 +23,13 @@ type File struct {
 	PointTo Path        // for symlink
 	Content []byte      // for regular file
 	Files   []*File     // for directory
+}
+
+type ErrorHandler func(ftype FileType, file *File, err error) error
+type WriteParams struct {
+	Prefix Path
+	Owner  string
+	Mode   os.FileMode
 }
 
 func NewFile(path Path, content []byte) *File {
@@ -66,15 +74,20 @@ func NewSymlink(path Path, pointTo Path) *File {
 	}
 }
 
-func (f *File) Write(mode os.FileMode, owner string) (Path, error) {
+func (f *File) Write(p WriteParams, errHandler ErrorHandler) (Path, error) {
 	switch f.Type {
 	case Regular:
-		return f.Path, os.WriteFile(f.Path.String(), f.Content, f.Mode)
+		err := os.WriteFile(filepath.Join(p.Prefix.String(), f.Path.String()), f.Content, f.Mode)
+		return f.GetPath(), errHandler(f.Type, f, err)
 	case Directory:
 		writeDirFunc := func(f *File) error {
+			err := os.MkdirAll(filepath.Join(p.Prefix.String(), f.Path.String()), p.Mode)
+			if err := errHandler(f.Type, f, err); err != nil {
+				return err
+			}
 			for _, file := range f.Files {
-				_, err := file.Write(mode, owner)
-				if err != nil {
+				_, err := file.Write(p, errHandler)
+				if err := errHandler(f.Type, f, err); err != nil {
 					return err
 				}
 			}
@@ -82,7 +95,8 @@ func (f *File) Write(mode os.FileMode, owner string) (Path, error) {
 		}
 		return f.Path, writeDirFunc(f)
 	case Symlink:
-		return f.Path, os.Symlink(f.PointTo.String(), f.Path.String())
+		err := os.Symlink(f.PointTo.String(), filepath.Join(p.Prefix.String(), f.Path.String()))
+		return f.GetPath(), errHandler(f.Type, f, err)
 	default:
 		return "", ErrInvalidFileType
 	}
