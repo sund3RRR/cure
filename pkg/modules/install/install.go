@@ -28,7 +28,7 @@ type File interface {
 type InstallerModule interface {
 	SetParams(params Params)
 	CheckAndPrepare() error
-	Apply(packagePath string, files []*types.File) []*types.File
+	Apply(packagePath string, files []types.File) []types.File
 }
 
 type Params struct {
@@ -74,7 +74,7 @@ func (i *Installer) InstallPackage(name string, params Params) error {
 	}
 
 	// Apply modules, e.g. modifications to packages
-	files := make([]*types.File, 0)
+	files := make([]types.File, 0)
 	for _, m := range i.modules {
 		files = m.Apply(pi.Out.String(), files)
 	}

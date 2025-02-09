@@ -194,14 +194,14 @@ func (n *NixGLWrapper) CheckAndPrepare() error {
 	return nil
 }
 
-func (n *NixGLWrapper) Apply(packagePath string, files []*types.File) []*types.File {
+func (n *NixGLWrapper) Apply(packagePath string, files []types.File) []types.File {
 	binDir := filepath.Join(packagePath, "bin")
 	dirFiles, err := os.ReadDir(binDir)
 	if err != nil {
 		return files
 	}
 
-	binFiles := make([]*types.File, 0)
+	binFiles := make([]types.File, 0)
 	for _, f := range dirFiles {
 		if strings.HasPrefix(f.Name(), ".") {
 			continue
@@ -214,7 +214,7 @@ func (n *NixGLWrapper) Apply(packagePath string, files []*types.File) []*types.F
 			},
 			"\n",
 		)
-		wrappedBin := types.NewFile(types.NewPath("bin", f.Name()), []byte(content))
+		wrappedBin := types.NewRegularFile(types.NewPath("bin", f.Name()), []byte(content))
 		binFiles = append(binFiles, wrappedBin)
 	}
 
