@@ -26,6 +26,7 @@ type File interface {
 	Write(p WriteParams, errHandler ErrorHandler) (Path, error)
 	GetPath() Path
 	GetType() FileType
+	GetName() string
 }
 
 type Regular struct {
@@ -57,6 +58,10 @@ func (r *Regular) GetPath() Path {
 
 func (r *Regular) GetType() FileType {
 	return r.Type
+}
+
+func (r *Regular) GetName() string {
+	return r.Name
 }
 
 func (r *Regular) Write(p WriteParams, errHandler ErrorHandler) (Path, error) {
@@ -95,9 +100,13 @@ func (d *Directory) GetType() FileType {
 	return d.Type
 }
 
+func (d *Directory) GetName() string {
+	return d.Name
+}
+
 func (d *Directory) Write(p WriteParams, errHandler ErrorHandler) (Path, error) {
 	writeDirFunc := func(f File) error {
-		err := os.MkdirAll(filepath.Join(p.Prefix.String(), d.Path.String()), p.Mode)
+		err := os.Mkdir(filepath.Join(p.Prefix.String(), d.Path.String()), p.Mode)
 		if err := errHandler(d.Type, f, err); err != nil {
 			return err
 		}
@@ -111,6 +120,29 @@ func (d *Directory) Write(p WriteParams, errHandler ErrorHandler) (Path, error) 
 	}
 
 	return d.Path, writeDirFunc(d)
+}
+
+func (d *Directory) Search(relPath Path) File {
+	splitted := strings.Split(relPath.String(), "/")
+	name := splitted[0]
+
+	if d.GetName() == name {
+		return d
+	}
+
+	for _, file := range d.Files {
+		if file.GetName() == name {
+			if len(splitted) > 1 {
+				if dir, ok := file.(*Directory); ok {
+					return dir.Search(Path(strings.Join(splitted[1:], "/")))
+				}
+				return nil
+			}
+			return file
+		}
+	}
+
+	return nil
 }
 
 type Symlink struct {
@@ -141,6 +173,10 @@ func (s *Symlink) GetPath() Path {
 
 func (s *Symlink) GetType() FileType {
 	return s.Type
+}
+
+func (s *Symlink) GetName() string {
+	return s.Name
 }
 
 func (s *Symlink) Write(p WriteParams, errHandler ErrorHandler) (Path, error) {

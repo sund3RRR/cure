@@ -1,95 +1,82 @@
 package install
 
 import (
-	"fmt"
+	"errors"
 	"os"
 	"path/filepath"
-	"slices"
 
-	"github.com/sund3RRR/cure/pkg/types/file"
+	"github.com/sund3RRR/cure/pkg/types"
 )
 
 type PathBuilder struct {
 	ProfilePath string
-	ExcludeDirs []string
 }
 
 func NewPathBuilder(profilePath string) *PathBuilder {
 	return &PathBuilder{
 		ProfilePath: profilePath,
-		ExcludeDirs: []string{
-			"bin",
-			"lib",
-			"lib/system/systemd",
-			"lib64",
-			"libexec",
-			"include",
-			"etc",
-			"share",
-			"share/applications",
-			"doc",
-			"man",
-		},
 	}
 }
 
-func (s *PathBuilder) Build(packagePath string, files []*file.File) error {
-	for _, file := range files {
-		if file.IsDir() {
-			if slices.Contains(s.ExcludeDirs, file.Name) {
-				os.Mkdir(file.GetPath(), os.ModePerm)
-			} else {
-				err := os.Symlink(packagePath+file.GetPath(), s.ProfilePath+file.GetPath())
+func (b *PathBuilder) Build(packagePath types.Path, prefix types.Path, files []types.File) error {
+	params := types.WriteParams{Prefix: prefix, Mode: 0755}
+	errhandler := func(fileType types.FileType, file types.File, err error) error {
+		switch fileType {
+		case types.RegularFile, types.SymlinkFile:
+			return nil
+		case types.DirectoryFile:
+			if errors.Is(err, os.ErrExist) {
+				link, err := os.Readlink(file.GetPath().String())
+				if err != nil {
+					return nil
+				}
+
+				if err := os.Remove(file.GetPath().String()); err != nil {
+					return err
+				}
+				if err := os.Mkdir(file.GetPath().String(), 0755); err != nil {
+					return err
+				}
+				dir, err := os.ReadDir(link)
 				if err != nil {
 					return err
 				}
-			}
-			continue
-		}
 
-		err := os.WriteFile(filepath.Join(s.ProfilePath, file.GetPath()), file.Content, file.Mode)
+				for _, f := range dir {
+					if err := os.Symlink(filepath.Join(link, f.Name()), filepath.Join(file.GetPath().String(), f.Name())); err != nil {
+						return err
+					}
+				}
+			}
+			return nil
+		}
+		return nil
+	}
+
+	for _, file := range files {
+		_, err := file.Write(params, errhandler)
 		if err != nil {
 			return err
 		}
 	}
 
-	err := filepath.WalkDir(packagePath, func(path string, d os.DirEntry, err error) error {
+	return b.symlinkAll(packagePath, prefix)
+}
+
+func (b *PathBuilder) symlinkAll(old, prefix types.Path) error {
+	dir, err := os.ReadDir(old.String())
+	if err != nil {
+		return err
+	}
+
+	for _, file := range dir {
+		err := os.Symlink(filepath.Join(old.String(), file.Name()), filepath.Join(prefix.String(), file.Name()))
 		if err != nil {
-			return err
-		}
-
-		relPath, err := filepath.Rel(packagePath, path)
-		if err != nil {
-			return err
-		}
-
-		dstPath := filepath.Join(s.ProfilePath, relPath)
-
-		if d.IsDir() {
-			if slices.Contains(s.ExcludeDirs, relPath) {
-				if _, err := os.Lstat(dstPath); os.IsNotExist(err) {
-					if err := os.Mkdir(dstPath, 0755); err != nil {
-						return fmt.Errorf("ошибка при создании директории %s: %v", path, err)
-					}
-				}
-			} else {
-				if _, err := os.Lstat(dstPath); os.IsNotExist(err) {
-					if err := os.Symlink(path, dstPath); err != nil {
-						return fmt.Errorf("ошибка при создании симлинка для директории %s: %v", path, err)
-					}
-				}
-			}
-		} else {
-			if _, err := os.Lstat(dstPath); os.IsNotExist(err) {
-				err := os.Symlink(path, dstPath)
-				if err != nil {
-					return fmt.Errorf("ошибка при создании симлинка для файла %s: %v", path, err)
-				}
+			if file.IsDir() {
+				return b.symlinkAll(types.NewPath(old.String(), file.Name()), prefix+types.Path(file.Name()))
 			}
 		}
+	}
 
-		return nil
-	})
-
-	return err
+	return nil
 }

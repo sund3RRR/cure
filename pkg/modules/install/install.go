@@ -1,11 +1,9 @@
 package install
 
 import (
-	"errors"
 	"strings"
 
 	"github.com/sund3RRR/cure/pkg/adapters/gpu"
-	"github.com/sund3RRR/cure/pkg/adapters/nix"
 	"github.com/sund3RRR/cure/pkg/types"
 )
 
@@ -26,15 +24,15 @@ type File interface {
 }
 
 type InstallerModule interface {
-	SetParams(params Params)
-	CheckAndPrepare() error
-	Apply(packagePath string, files []types.File) []types.File
+	CheckAndPrepare(pkgPath types.Path, params Params) error
+	Apply(pkgPath types.Path, files []types.File) []types.File
 }
 
 type Params struct {
 	NixGL        types.NixGL
 	NixGLPackage types.NixGLPackage
 }
+
 type Installer struct {
 	nix     Nix
 	modules []InstallerModule
@@ -64,21 +62,22 @@ func (i *Installer) InstallPackage(name string, params Params) error {
 	// Download package to /nix/store
 	pi, err := i.nix.GetPackage(registry, pkg)
 	if err != nil {
-		if errors.Is(err, nix.ErrCannotFindFlake) {
-			err := i.nix.AddRegistry("nixgl", "github:nix-community/nixGL")
-			if err != nil {
-				return err
-			}
-		}
 		return err
+	}
+
+	// Prepare modules for building profile
+	for _, m := range i.modules {
+		if err := m.CheckAndPrepare(pi.Out, params); err != nil {
+			return err
+		}
 	}
 
 	// Apply modules, e.g. modifications to packages
 	files := make([]types.File, 0)
 	for _, m := range i.modules {
-		files = m.Apply(pi.Out.String(), files)
+		files = m.Apply(pi.Out, files)
 	}
 
 	// Build profile path
-	return i.builder.Build(pi.Out.String(), files)
+	return i.builder.Build(pi.Out, types.NewPath("/opt/cure"), files)
 }

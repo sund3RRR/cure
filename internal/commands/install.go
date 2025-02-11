@@ -36,17 +36,17 @@ func NewInstall(_ config.Config, logger *zap.Logger, nix Nix) *Install {
 	}
 
 	install.cmd = &cli.Command{
-		Name:   "install",
-		Usage:  "cure install <package>, if you want install from default registry (nixpkgs) or cure install <registry#package>",
+		Name: "install",
+		Usage: "command to install package from nix flake registry.\n" +
+			"Type 'cure install <package>', if you want install from default registry (nixpkgs) or 'cure install <registry#package>'",
 		Action: install.handleCommand,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:    "gl",
-				Aliases: []string{"gl"},
-				Value:   types.NixGLAuto.String(),
+				Name:  "gl",
+				Value: types.NixGLAuto.String(),
 				Usage: "enable nixGL wrapper for package.\n" +
-					possibleValuesString(types.NixGLValues, types.NixGLAuto, types.UnderlinedSeq) +
-					"auto will automatically detect GUI binaries and enable nixGL wrapper for them",
+					possibleValuesString(types.NixGLValues, types.NixGLAuto, types.UnderlinedSeq) + "\n" +
+					"Auto will automatically detect GUI binaries and enable nixGL wrapper for them",
 				Action: func(_ context.Context, _ *cli.Command, s string) error {
 					return validateFlagValue(types.NixGL(s), types.NixGLValues)
 				},
@@ -56,8 +56,8 @@ func NewInstall(_ config.Config, logger *zap.Logger, nix Nix) *Install {
 				Aliases: []string{"glt"},
 				Value:   types.NixGLAuto.String(),
 				Usage: "nixGL wrapper type for package.\n" +
-					possibleValuesString(types.NixGLPackageValues, types.NixGLPackageAuto, types.UnderlinedSeq) +
-					"auto will automatically detect needed nixGL wrapper",
+					possibleValuesString(types.NixGLPackageValues, types.NixGLPackageAuto, types.UnderlinedSeq) + "\n" +
+					"Auto will automatically detect needed nixGL wrapper",
 				Action: func(_ context.Context, _ *cli.Command, s string) error {
 					return validateFlagValue(types.NixGLPackage(s), types.NixGLPackageValues)
 				},
