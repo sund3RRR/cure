@@ -1,36 +1,31 @@
 package main
 
 import (
-	"fmt"
 	"log"
+	"os"
+	"os/exec"
 	"os/user"
-
-	"github.com/sund3RRR/cure/internal/config"
-	"github.com/sund3RRR/cure/pkg/adapters/nix"
 )
 
 var home = getUserHome()
 var configPaths = []string{home + "/.config/cure/cure.yaml", "/etc/cure/cure.yaml"}
 
 func main() {
-	// Create main config
-	cfg := config.NewConfig(configPaths...)
-
-	// Init logger
-	logger, err := cfg.Logger.Build()
+	file, err := os.Create("output.txt")
 	if err != nil {
-		log.Fatal("failed to create logger: ", err)
+		log.Fatal(err)
 	}
-	defer logger.Sync() //nolint
+	defer file.Close()
 
-	// Create adapters
-	nixAdapter := nix.NewNix(logger)
+	cmd := exec.Command("nix", "--extra-experimental-features", "nix-command",
+		"--extra-experimental-features", "flakes", "build", "--no-link", "--json", "nixgl#nixGLIntel")
+	cmd.Stdout = file
+	cmd.Stderr = file
 
-	pi, err := nixAdapter.GetPackage("nixpkgs", "micro")
+	err = cmd.Run()
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 	}
-	fmt.Println(pi)
 }
 
 func getUserHome() string {

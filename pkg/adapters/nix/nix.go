@@ -2,7 +2,10 @@
 package nix
 
 import (
+	"bytes"
 	"encoding/json"
+	"io"
+	"os"
 	"os/exec"
 
 	"github.com/sund3RRR/cure/pkg/types"
@@ -42,13 +45,20 @@ func (nix *Nix) GetPackage(registry, pkg string) (types.PackageInfo, error) {
 	)
 
 	cmd := exec.Command(nix.command, args...) //nolint
-	cmdOutput, err := cmd.CombinedOutput()
+
+	var outputBuffer bytes.Buffer
+	multiWriter := io.MultiWriter(os.Stdout, &outputBuffer)
+	cmd.Stdout = multiWriter
+	cmd.Stderr = multiWriter
+
+	err := cmd.Run()
+	cmdOutput := outputBuffer.String()
 	if err != nil {
-		err := reflectNixError(string(cmdOutput))
+		err := reflectNixError(cmdOutput)
 		if err == ErrUnknownNixError {
 			nix.logger.Error(
 				"failed to execute nix build",
-				zap.Error(err), zap.Strings("args", args), zap.ByteString("cmdOutput", cmdOutput),
+				zap.Error(err), zap.Strings("args", args), zap.String("cmdOutput", cmdOutput),
 			)
 		}
 		return types.PackageInfo{}, err

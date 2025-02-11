@@ -31,7 +31,6 @@ func main() {
 	}
 	defer logger.Sync() //nolint
 
-	// Create adapters
 	nixAdapter := nix.NewNix(logger)
 
 	// Create commands

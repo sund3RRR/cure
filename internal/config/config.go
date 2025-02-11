@@ -29,7 +29,7 @@ func NewConfig(paths ...string) Config {
 			ProfileDir: "/opt/cure",
 		},
 		Logger: zap.Config{
-			Level:            zap.NewAtomicLevelAt(zap.WarnLevel),
+			Level:            zap.NewAtomicLevelAt(zap.InfoLevel),
 			Encoding:         "console",
 			OutputPaths:      []string{"stderr", "/tmp/app.log"},
 			ErrorOutputPaths: []string{"stderr", "/tmp/app-error.log"},
