@@ -1,9 +1,11 @@
 package install
 
 import (
+	"os"
 	"strings"
 
 	"github.com/sund3RRR/cure/pkg/adapters/gpu"
+	"github.com/sund3RRR/cure/pkg/adapters/printer"
 	"github.com/sund3RRR/cure/pkg/types"
 )
 
@@ -25,7 +27,7 @@ type File interface {
 
 type InstallerModule interface {
 	GetName() string
-	CheckAndPrepare(pkgPath types.Path, params Params) error
+	CheckAndPrepare(pkgPath types.Path, params Params) (bool, error)
 	Apply(pkgPath types.Path, files []types.File) []types.File
 }
 
@@ -50,7 +52,7 @@ func NewInstaller(nix Nix) *Installer {
 	}
 }
 
-func (i *Installer) InstallPackage(name string, params Params) error {
+func (installer *Installer) InstallPackage(name string, params Params) error {
 	// Substitute empty registry with 'nixpkgs'
 	splitted := strings.Split(name, "#")
 	var registry, pkg string
@@ -61,24 +63,37 @@ func (i *Installer) InstallPackage(name string, params Params) error {
 	}
 
 	// Download package to /nix/store
-	pi, err := i.nix.GetPackage(registry, pkg)
+	printer.Processing(os.Stdout, "Downloading %s#%s...", registry, pkg)
+	pi, err := installer.nix.GetPackage(registry, pkg)
 	if err != nil {
 		return err
 	}
+	printer.Success(os.Stdout, "Successfully downloaded %s#%s", registry, pkg)
 
 	// Prepare modules for building profile
-	for _, m := range i.modules {
-		if err := m.CheckAndPrepare(pi.Out, params); err != nil {
+	modulesBoolMap := make([]bool, len(installer.modules))
+	for i, m := range installer.modules {
+		enable, err := m.CheckAndPrepare(pi.Out, params)
+		if err != nil {
 			return err
+		}
+		modulesBoolMap[i] = enable
+
+		if enable {
+			printer.Success(os.Stdout, "using %s module", m.GetName())
+		} else {
+			printer.Skip(os.Stdout, "skipping %s module", m.GetName())
 		}
 	}
 
 	// Apply modules, e.g. modifications to packages
 	files := make([]types.File, 0)
-	for _, m := range i.modules {
-		files = m.Apply(pi.Out, files)
+	for i, m := range installer.modules {
+		if modulesBoolMap[i] {
+			files = m.Apply(pi.Out, files)
+		}
 	}
 
 	// Build profile path
-	return i.builder.Build(pi.Out, types.NewPath("/opt/cure"), files)
+	return installer.builder.Build(pi.Out, types.NewPath("/opt/cure"), files)
 }

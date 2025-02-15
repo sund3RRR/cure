@@ -35,17 +35,17 @@ func (n *NixGLWrapper) GetName() string {
 	return "GL and Vulkan wrapper"
 }
 
-func (n *NixGLWrapper) CheckAndPrepare(pkgPath types.Path, params Params) error {
+func (n *NixGLWrapper) CheckAndPrepare(pkgPath types.Path, params Params) (bool, error) {
 	// Check that working dirs for this module exists
-	var enable bool
+	var enableModule bool
 	for _, dir := range n.workingDirs {
 		if types.NewPath(pkgPath.String(), dir).Exists() {
-			enable = true
+			enableModule = true
 			break
 		}
 	}
-	if !enable {
-		return nil
+	if !enableModule {
+		return false, nil
 	}
 
 	// Set module params
@@ -63,31 +63,38 @@ func (n *NixGLWrapper) CheckAndPrepare(pkgPath types.Path, params Params) error 
 	pi, err := n.nix.PathInfo("nixgl", pkg)
 	if err != nil {
 		if errors.Is(err, nix.ErrCannotFindFlake) {
+			printer.Info(os.Stdout, "nixGL registry not found")
+			printer.Processing(os.Stdout, "Adding nixGL registry")
 			err := n.nix.AddRegistry("nixgl", "github:nix-community/nixGL")
 			if err != nil {
-				printer.Failedf(os.Stdout, "to add nixGL registry")
-				return err
+				printer.Failed(os.Stdout, "Failed to add nixGL registry")
+				return true, err
 			}
-			printer.Successf(os.Stdout, "added nixGL registry")
+			printer.Success(os.Stdout, "Successfully added nixGL registry")
+			pi, err = n.nix.PathInfo("nixgl", pkg)
+			if err != nil {
+				return true, err
+			}
 		}
-		return err
+		return true, err
 	}
 
 	// Check that selected package exists in the store.
 	// If it doesn't, download package from 'nixGL' registry
 	if !pi.Out.Exists() {
+		printer.Processing(os.Stdout, "Installing nixGL %s package...", pkg)
 		pi, err = n.nix.GetPackage("nixgl", pkg)
 		if err != nil {
-			printer.Failedf(os.Stdout, "to install nixGL %s package", pkg)
-			return err
+			printer.Failed(os.Stdout, "Failed to install nixGL %s package", pkg)
+			return true, err
 		}
-		printer.Successf(os.Stdout, "installed nixGL %s package", pkg)
+		printer.Success(os.Stdout, "Successfully installed nixGL %s package", pkg)
 	}
 
 	// Set exec path with selected package
 	n.execPath = filepath.Join(pi.Out.String(), "bin", pkg)
 
-	return nil
+	return true, nil
 }
 
 func (n *NixGLWrapper) Apply(pkgPath types.Path, files []types.File) []types.File {

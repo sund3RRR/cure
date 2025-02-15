@@ -29,7 +29,7 @@ func NewNix(logger *zap.Logger, flags ...string) *Nix {
 
 	return &Nix{
 		logger:  logger,
-		command: "nix",
+		command: "/nix/store/ar6980is6p3993lgpr07wk2i0ynsm3lf-nix-2.27.0pre19700101_dirty/bin/nix",
 		flags:   flags,
 	}
 }
